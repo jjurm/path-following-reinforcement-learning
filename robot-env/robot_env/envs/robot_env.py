@@ -83,10 +83,10 @@ class RobotEnv(gym.Env):
         if not self.action_space.contains(action):
             raise ValueError("Invalid action {}".format(action))
 
-        # Compute new state values
-        new_u = 
+        # # Compute new state values
+        # new_u = 
 
-        self.state = 
+        # self.state = 
 
 
 
