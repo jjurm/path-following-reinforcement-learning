@@ -1,7 +1,7 @@
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-
+from os import path
 import numpy as np
 
 class RobotEnv(gym.Env):
@@ -219,7 +219,25 @@ class RobotEnv(gym.Env):
         return self._get_observation(self.state)
 
     def render(self, mode='human'):
-        pass
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.Viewer(500,500)
+            self.viewer.set_bounds(self.MIN_X,self.MAX_X,self.MIN_Y,self.MAX_Y) #Scale (X,X,Y,Y)
+            fname = path.join(path.dirname(__file__), "assets/robot.png")
+            self.img = rendering.Image(fname, .25, .25)
+            self.imgtrans = rendering.Transform()
+            self.img.add_attr(self.imgtrans)
+            axle = rendering.make_circle(.1)
+            axle.set_color(255,0,0)
+            self.goaltrans = rendering.Transform()
+            axle.add_attr(self.goaltrans)
+            self.viewer.add_geom(axle)
+        self.viewer.add_onetime(self.img)
+        self.imgtrans.set_translation(self.state[2],self.state[3])
+        self.imgtrans.set_rotation(self.state[4]-np.pi/2)
+        self.goaltrans.set_translation(self.goal_pos[0],self.goal_pos[1])
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
         if self.viewer:
