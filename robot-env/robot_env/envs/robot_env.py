@@ -34,8 +34,8 @@ class RobotEnv(gym.Env):
         # Boundaries of the environment
         self.MIN_X, self.MAX_X = (-5, 5)
         self.MIN_Y, self.MAX_Y = (-5, 5)
-        self.MIN_SPEED = -3
-        self.MAX_SPEED = 3
+        self.MIN_SPEED = -1
+        self.MAX_SPEED = 1
         self.MIN_THETA = -np.pi
         self.MAX_THETA = np.pi
 
@@ -66,27 +66,25 @@ class RobotEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _get_new_state(self, u, w, x, y, theta, delta_u, delta_w):
+    def _get_new_state(self, u, w, x, y, theta, new_u, new_w):
         # Clip updates
-        delta_u = np.clip(delta_u, self.MIN_SPEED, self.MAX_SPEED)
-        delta_w = np.clip(delta_w, self.MIN_SPEED, self.MAX_SPEED)
+        new_u = np.clip(new_u, self.MIN_SPEED, self.MAX_SPEED)
+        new_w = np.clip(new_w, self.MIN_SPEED, self.MAX_SPEED)
 
         # Update and compute velocities
-        u = u + delta_u
-        w = w + delta_w
-        x_dot = u * np.cos(theta)
-        y_dot = u * np.sin(theta)
-        theta_dot = w 
+        avg_u = (u + new_u) / 2
+        avg_w = (w + new_w) / 2
+
+        theta_target = theta + avg_w * self.dt
+
+        theta_motion = (theta + theta_target) / 2
 
         # Update state
-        x = x_dot * self.dt
-        y = y_dot * self.dt
-        theta = theta_dot * self.dt
-
-        # Clip new state values, except X and Y since we want to detect collisions
-        u = np.clip(u, self.MIN_SPEED, self.MAX_SPEED)
-        w = np.clip(w, self.MIN_SPEED, self.MAX_SPEED)
-        theta = np.clip(theta, self.MIN_THETA, self.MAX_THETA)
+        u = new_u
+        w = new_w
+        x += avg_u * np.cos(theta_motion) * self.dt
+        y += avg_u * np.sin(theta_motion) * self.dt
+        theta = theta_target
 
         new_state = np.array([u, w, x, y, theta])
 
@@ -103,7 +101,7 @@ class RobotEnv(gym.Env):
         _, _, x, y, _ = state
 
         # Check if hits wall
-        eps = 0.1
+        eps = self.dist_threshold
         if abs(x - self.MIN_X) < eps \
             or abs(x - self.MAX_X) < eps \
             or abs(y - self.MIN_Y) < eps \
@@ -113,6 +111,10 @@ class RobotEnv(gym.Env):
         # Checks if hits obstacles
         if obs:
             raise NotImplementedError("Obstacles not implemented yet.")
+
+        goal_dst = np.linalg.norm(np.array([x, y]) - self.goal_pos)
+        if goal_dst < self.dist_threshold:
+            return True
 
         return False
 
@@ -125,10 +127,9 @@ class RobotEnv(gym.Env):
         multiplied by some scaling factor.
         """
         _, _, x, y, _ = self.state
-
         
         dist = self._get_dist(self.goal_pos, np.array([x, y]))
-        reward = self.alpha * (1 / dist)
+        reward = - self.alpha * dist
 
         return reward
 
@@ -185,15 +186,16 @@ class RobotEnv(gym.Env):
         observation = self._get_observation(self.state)
         reward = self._get_new_reward(self.state)
         done = self._get_done(self.state)
-        info = {}
+        info = {
+            "x": x,
+            "y": y
+        }
 
         # print('current_position: {}'.format((x, y)))
         curr_pos = np.array([self.state[2], self.state[3]])
         # print("Curr Dist: {:.4f}\t|\t Position: {}".format(
         #     self._get_dist(curr_pos, self.goal_pos),
         #     curr_pos))
-
-        print(delta_u, delta_w)
 
         return observation, reward, done, info
 
@@ -205,8 +207,8 @@ class RobotEnv(gym.Env):
         """
         rand_u = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
         rand_w = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
-        rand_x = np.random.uniform(self.MIN_X, self.MAX_X)
-        rand_y = np.random.uniform(self.MIN_Y, self.MAX_Y)
+        rand_x = np.random.uniform(self.MIN_X, self.MAX_X) / 10.
+        rand_y = np.random.uniform(self.MIN_Y, self.MAX_Y) / 10.
         rand_theta = np.random.uniform(self.MIN_THETA, self.MAX_THETA)
 
         self.state = np.array([
