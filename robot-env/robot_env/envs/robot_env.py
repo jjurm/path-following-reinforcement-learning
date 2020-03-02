@@ -61,6 +61,11 @@ class RobotEnv(gym.Env):
 
         # Visualisation variables
         self.viewer = None
+        self.pathTrace = 50
+        self.pathTraceSpace = 3
+        self.pathTraceSpaceCounter = 0
+        self.path = np.zeros([self.pathTrace,2])
+        self.pathPtr = 0
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -222,22 +227,52 @@ class RobotEnv(gym.Env):
 
     def render(self, mode='human'):
         if self.viewer is None:
+            # import the required library
             from gym.envs.classic_control import rendering
+
+            # Set the display window size and range
             self.viewer = rendering.Viewer(500,500)
             self.viewer.set_bounds(self.MIN_X,self.MAX_X,self.MIN_Y,self.MAX_Y) #Scale (X,X,Y,Y)
+
+            # Create the robot
             fname = path.join(path.dirname(__file__), "assets/robot.png")
-            self.img = rendering.Image(fname, .25, .25)
-            self.imgtrans = rendering.Transform()
-            self.img.add_attr(self.imgtrans)
-            axle = rendering.make_circle(.1)
-            axle.set_color(255,0,0)
-            self.goaltrans = rendering.Transform()
-            axle.add_attr(self.goaltrans)
-            self.viewer.add_geom(axle)
-        self.viewer.add_onetime(self.img)
-        self.imgtrans.set_translation(self.state[2],self.state[3])
-        self.imgtrans.set_rotation(self.state[4]-np.pi/2)
-        self.goaltrans.set_translation(self.goal_pos[0],self.goal_pos[1])
+            self.robotobj = rendering.Image(fname, .25, .25)
+            self.robot_t = rendering.Transform()
+            self.robotobj.add_attr(self.robot_t)
+
+            # Create the goal location
+            self.goalobj = rendering.make_circle(.1)
+            self.goalobj.set_color(255,0,0)
+            self.goal_t = rendering.Transform()
+            self.goalobj.add_attr(self.goal_t)
+            self.viewer.add_geom(self.goalobj)
+            self.goal_t.set_translation(self.goal_pos[0],self.goal_pos[1])
+
+            # Create trace path
+            self.traceobj = []
+            self.traceobj_t = []
+            for i in range(self.pathTrace):
+                self.traceobj.append(rendering.make_circle(.02+.03 * i/self.pathTrace))
+                print(.5*i/self.pathTrace,1.-.5*i/self.pathTrace,i/self.pathTrace)
+                self.traceobj[i].set_color(.5-.5*i/self.pathTrace,1.-.5*i/self.pathTrace,i/self.pathTrace) # Setting the color gradiant for path
+                self.traceobj_t.append(rendering.Transform())
+                self.traceobj[i].add_attr(self.traceobj_t[i])
+                self.traceobj_t[i].set_translation(-2+i*0.05,0)
+                self.viewer.add_geom(self.traceobj[i])
+
+        # Draw the robot
+        self.viewer.add_onetime(self.robotobj)
+        self.robot_t.set_translation(self.state[2],self.state[3])
+        self.robot_t.set_rotation(self.state[4]-np.pi/2)
+
+        # Update trace
+        self.pathTraceSpaceCounter = (self.pathTraceSpaceCounter+1) % self.pathTraceSpace
+        if self.pathTraceSpaceCounter == 0:
+            self.path[self.pathPtr][0],self.path[self.pathPtr][1] = (self.state[2],self.state[3])
+            self.pathPtr = (self.pathPtr+1) % self.pathTrace
+            for i in range(self.pathTrace):
+                counter = (i + self.pathPtr) % self.pathTrace
+                self.traceobj_t[i].set_translation(self.path[counter][0],self.path[counter][1])
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
