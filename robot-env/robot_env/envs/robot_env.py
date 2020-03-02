@@ -55,8 +55,8 @@ class RobotEnv(gym.Env):
             dtype=np.float32)
 
         self.observation_space = spaces.Box(
-            low=np.array([self.MIN_SPEED, self.MIN_SPEED, self.MIN_X, self.MIN_Y, self.MIN_THETA], dtype=np.float32),
-            high=np.array([self.MAX_SPEED, self.MAX_SPEED, self.MAX_X, self.MAX_Y, self.MAX_THETA], dtype=np.float32),
+            low=np.array([self.MIN_SPEED, self.MIN_SPEED, self.MIN_X, self.MIN_Y], dtype=np.float32),
+            high=np.array([self.MAX_SPEED, self.MAX_SPEED, self.MAX_X, self.MAX_Y], dtype=np.float32),
             dtype=np.float32)
 
         # Visualisation variables
@@ -132,6 +132,19 @@ class RobotEnv(gym.Env):
 
         return reward
 
+    def _get_observation(self, state):
+        u, w, x, y, theta = state
+
+        goal_relative = np.array([
+            [np.cos(theta), -np.sin(theta)],
+            [np.sin(theta), np.cos(theta)]
+        ]).dot(self.goal_pos - np.array([x, y]))
+
+        return np.concatenate([
+            np.array([u, w]),
+            goal_relative
+        ])
+
     def step(self, action):
         """
         States are updated according to forward kinematics.
@@ -169,6 +182,7 @@ class RobotEnv(gym.Env):
 
         # Update variables
         self.state = self._get_new_state(u, w, x, y, theta, delta_u, delta_w)
+        observation = self._get_observation(self.state)
         reward = self._get_new_reward(self.state)
         done = self._get_done(self.state)
         info = {}
@@ -181,7 +195,7 @@ class RobotEnv(gym.Env):
 
         print(delta_u, delta_w)
 
-        return self.state, reward, done, info
+        return observation, reward, done, info
 
     def reset(self):
         """
@@ -202,7 +216,7 @@ class RobotEnv(gym.Env):
             rand_y,
             rand_theta])
 
-        return self.state
+        return self._get_observation(self.state)
 
     def render(self, mode='human'):
         pass
