@@ -7,7 +7,7 @@ def build_critic(action_input, observation_input):
     """
     Docs
     """
-    init = RandomNormal(mean=0.0, stddev=0.1, seed=None)
+    init = RandomNormal(mean=0.0, stddev=0.2, seed=None)
     flattened_observation = Flatten()(observation_input)
     x = Concatenate()([action_input, flattened_observation])
     x = Dense(8, activation='relu', kernel_initializer=init)(x)

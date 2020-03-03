@@ -7,7 +7,7 @@ def build_actor(batch_size, nb_actions, env):
     """
     Docs
     """
-    init = RandomNormal(mean=0.0, stddev=0.1, seed=None)
+    init = RandomNormal(mean=0.0, stddev=0.2, seed=None)
     actor = Sequential([
         Flatten(input_shape=(batch_size,) + env.observation_space.shape),
         Dense(8, activation='relu', kernel_initializer=init),

@@ -119,8 +119,6 @@ class RobotEnv(gym.Env):
         bonus = 10
 
         potential = - self.alpha * self._get_goal_dist()
-        if self._is_invalid():
-            potential -= bonus
         if self._is_goal_reached():
             potential += bonus
         #reward += - np.log(np.abs(state[1]))
@@ -135,12 +133,12 @@ class RobotEnv(gym.Env):
             [np.sin(theta), np.cos(theta)]
         ]).dot(self.goal_pos - np.array([x, y]))
 
-        observation = np.array([
-            np.math.atan2(goal_relative[1], goal_relative[0]),
-            np.linalg.norm(goal_relative)
-        ])
+        #observation = np.array([
+        #    np.math.atan2(goal_relative[1], goal_relative[0]),
+        #    np.linalg.norm(goal_relative)
+        #])
 
-        return observation
+        return goal_relative
 
     def step(self, action: np.ndarray):
         """
@@ -197,7 +195,7 @@ class RobotEnv(gym.Env):
 
         frequency = 2
         if done or self.ticks % np.round(1 / self.dt / frequency) == 0:
-            print(f"Time {self._get_time()}: Pos ({x}, {y}), action ({new_u}, {new_w}), reward {reward}")
+            print(f"T {self._get_time()}: Pos ({x}, {y}), action ({new_u}, {new_w}), Obs{observation}, reward {reward}")
 
         return observation, reward, done, info
 
@@ -209,8 +207,8 @@ class RobotEnv(gym.Env):
         """
         rand_u = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
         rand_w = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
-        rand_x = np.random.uniform(self.MIN_X, self.MAX_X)
-        rand_y = np.random.uniform(self.MIN_Y, self.MAX_Y)
+        rand_x = np.random.uniform(self.MIN_X, self.MAX_X) / 5.
+        rand_y = np.random.uniform(self.MIN_Y, self.MAX_Y) / 5.
         rand_theta = np.random.uniform(self.MIN_THETA, self.MAX_THETA)
 
         self.state = np.array([

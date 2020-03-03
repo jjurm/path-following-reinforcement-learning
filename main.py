@@ -28,12 +28,9 @@ nb_actions = env.action_space.shape[0]
 #   Parameters
 ################
 # Training parameters
-batch_size = 1
+batch_size = 8
 lr = 1e-3
-num_steps = 50000
 max_episode_steps = 200
-num_episodes = 5
-
 # Agent parameters
 num_steps_warmup_critic = 100
 num_steps_warmup_actor = 100
@@ -43,7 +40,7 @@ gamma = 0.99
 #    Models
 ###############
 action_input = Input(shape=(nb_actions,), name='action_input')
-observation_input = Input(shape=(1,) + env.observation_space.shape, name='observation_input')
+observation_input = Input(shape=(batch_size,) + env.observation_space.shape, name='observation_input')
 
 actor = actor.build_actor(
     batch_size=batch_size,
@@ -76,24 +73,29 @@ agent = DDPGAgent(
     memory=memory,
     nb_steps_warmup_critic=num_steps_warmup_critic,
     nb_steps_warmup_actor=num_steps_warmup_actor,
-    #random_process=random_process,
+    random_process=random_process,
     gamma=gamma,
-    target_model_update=1e-3)
+    target_model_update=1e-2)
 
 agent.compile(opt, metrics=['mae'])
-agent.fit(
+
+#%%
+
+history = agent.fit(
     env,
-    nb_steps=num_steps,
+    nb_steps=2000,
     visualize=True,
-    verbose=1,
+    verbose=0,
     nb_max_episode_steps=max_episode_steps)
 
 # # After training is done, we save the final weights.
 # agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 
+#%%
+
 # Finally, evaluate our algorithm for 5 episodes.
 agent.test(
     env,
-    nb_episodes=num_episodes,
+    nb_episodes=3,
     visualize=True,
     nb_max_episode_steps=max_episode_steps)
