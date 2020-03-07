@@ -1,6 +1,5 @@
 import gym
 from gym import error, spaces, utils
-from gym.utils import seeding
 from os import path
 import numpy as np
 
@@ -32,21 +31,16 @@ class RobotEnv(gym.Env):
         self.seed(0)
 
         # Boundaries of the environment
-        self.MIN_X, self.MAX_X = (-5, 5)
-        self.MIN_Y, self.MAX_Y = (-5, 5)
-        self.MIN_SPEED = -1
-        self.MAX_SPEED = 1
-        self.MIN_THETA = -np.pi
+        self.FIELD_SIZE = 5.
+        self.MIN_SPEED = 0.
+        self.MAX_SPEED = 1.
         self.MAX_THETA = np.pi
 
         # Environment parameters
-        self.goal_pos = np.array([2, 2]) # goal position
+        self.goal_pos = np.array([2, 0]) # goal position
         self.dist_threshold = 0.2 # how close to goal = reach goal
         self.dt = 0.1 # Time delta per step
         self.ticks = 0
-
-        # Reward parameters
-        self.alpha = 1 # How much to scale the reward
 
         # Action and observation spaces
         self.action_space = spaces.Box(
@@ -55,8 +49,8 @@ class RobotEnv(gym.Env):
             dtype=np.float32)
 
         self.observation_space = spaces.Box(
-            low=np.array([self.MIN_X, self.MIN_Y], dtype=np.float32),
-            high=np.array([self.MAX_X, self.MAX_Y], dtype=np.float32),
+            low=np.array([-self.FIELD_SIZE, -self.FIELD_SIZE], dtype=np.float32),
+            high=np.array([self.FIELD_SIZE, self.FIELD_SIZE], dtype=np.float32),
             dtype=np.float32)
 
         # Visualisation variables
@@ -67,37 +61,32 @@ class RobotEnv(gym.Env):
         self.path = np.zeros([self.pathTrace,2])
         self.pathPtr = 0
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
     def _get_time(self):
         return self.ticks * self.dt
 
-    def _get_new_state(self, u, w, x, y, theta, new_u, new_w):
-        # Clip updates
-        new_u = np.clip(new_u, self.MIN_SPEED, self.MAX_SPEED)
-        new_w = np.clip(new_w, self.MIN_SPEED, self.MAX_SPEED)
+    def _get_new_state(self, target_u, target_w):
+        target_u = np.clip(target_u, self.MIN_SPEED, self.MAX_SPEED)
+        target_w = np.clip(target_w, -self.MAX_THETA, self.MAX_THETA)
+
+        u, w, x, y, theta = self.state
 
         # Update and compute velocities
-        avg_u = (u + new_u) / 2
-        avg_w = (w + new_w) / 2
+        avg_u = (u + target_u) / 2
+        avg_w = (u + target_w) / 2
 
         theta_motion = theta + avg_w * self.dt / 2
 
         # Update state
-        u = new_u
-        w = new_w
-        x += avg_u * np.cos(theta_motion) * self.dt
-        y += avg_u * np.sin(theta_motion) * self.dt
-        theta += avg_w * self.dt
+        new_x = x + avg_u * np.cos(theta_motion) * self.dt
+        new_y = y + avg_u * np.sin(theta_motion) * self.dt
+        new_theta = theta + avg_w * self.dt
 
-        return np.array([u, w, x, y, theta])
+        return np.array([target_u, target_w, new_x, new_y, new_theta])
 
     def _is_invalid(self):
         _, _, x, y, _ = self.state
         # Out of bounds
-        return x < self.MIN_X or x > self.MAX_X or y < self.MIN_Y or y > self.MAX_Y
+        return x < -self.FIELD_SIZE or x > self.FIELD_SIZE or y < -self.FIELD_SIZE or y > self.FIELD_SIZE
 
     def _is_goal_reached(self):
         return self._get_goal_dist() < self.dist_threshold
@@ -106,22 +95,13 @@ class RobotEnv(gym.Env):
         return self._is_invalid() or self._is_goal_reached()
 
     def _get_dist(self, p1, p2):
-        return np.linalg.norm((p1 - p2))
+        return np.linalg.norm(p1 - p2)
 
     def _get_goal_dist(self):
         return self._get_dist(self.state[[2, 3]], self.goal_pos)
 
     def _get_potential(self):
-        """
-        Checks how close to the robot is to the goal, and simply use reciprocal
-        multiplied by some scaling factor.
-        """
-        bonus = 10
-
-        potential = - self.alpha * self._get_goal_dist()
-        if self._is_goal_reached():
-            potential += bonus
-        #reward += - np.log(np.abs(state[1]))
+        potential = - self._get_goal_dist()
 
         return potential
 
@@ -132,11 +112,6 @@ class RobotEnv(gym.Env):
             [np.cos(theta), -np.sin(theta)],
             [np.sin(theta), np.cos(theta)]
         ]).dot(self.goal_pos - np.array([x, y]))
-
-        #observation = np.array([
-        #    np.math.atan2(goal_relative[1], goal_relative[0]),
-        #    np.linalg.norm(goal_relative)
-        #])
 
         return goal_relative
 
@@ -172,12 +147,11 @@ class RobotEnv(gym.Env):
                 However, official evaluations of your agent are not allowed to use this for learning.
         """
         # Unpack current state and action to take
-        new_u, new_w = np.array(action) * (self.MAX_SPEED - self.MIN_SPEED) / 2
-        u, w, x, y, theta = self.state
+        target_u, target_w = action
         prev_potential = self._get_potential()
 
         # Update variables
-        self.state = self._get_new_state(u, w, x, y, theta, new_u, new_w)
+        self.state = self._get_new_state(target_u, target_w)
 
         observation = self._get_observation()
         next_potential = self._get_potential()
@@ -195,7 +169,8 @@ class RobotEnv(gym.Env):
 
         frequency = 2
         if done or self.ticks % np.round(1 / self.dt / frequency) == 0:
-            print(f"T {self._get_time()}: Pos ({x}, {y}), action ({new_u}, {new_w}), Obs{observation}, reward {reward}")
+            u, w, x, y, theta = self.state
+            print(f"T {self._get_time()}: Pos ({x}, {y}), action ({u}, {w}), Obs{observation}, reward {reward}")
 
         return observation, reward, done, info
 
@@ -205,18 +180,16 @@ class RobotEnv(gym.Env):
 
         Called initially before an episode starts.
         """
-        rand_u = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
-        rand_w = np.random.uniform(self.MIN_SPEED, self.MAX_SPEED)
-        rand_x = np.random.uniform(self.MIN_X, self.MAX_X) / 5.
-        rand_y = np.random.uniform(self.MIN_Y, self.MAX_Y) / 5.
-        rand_theta = np.random.uniform(self.MIN_THETA, self.MAX_THETA)
+        rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+        rand_y = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+        rand_theta = np.random.uniform(-self.MAX_THETA, self.MAX_THETA)
 
         self.state = np.array([
             0,
             0,
-            rand_x,
-            rand_y,
-            rand_theta])
+            0,
+            0,
+            0])
         self.ticks = 0
 
         return self._get_observation()
@@ -228,7 +201,7 @@ class RobotEnv(gym.Env):
 
             # Set the display window size and range
             self.viewer = rendering.Viewer(500,500)
-            self.viewer.set_bounds(self.MIN_X,self.MAX_X,self.MIN_Y,self.MAX_Y) #Scale (X,X,Y,Y)
+            self.viewer.set_bounds(-self.FIELD_SIZE,self.FIELD_SIZE,-self.FIELD_SIZE,self.FIELD_SIZE) #Scale (X,X,Y,Y)
 
             # Create the robot
             fname = path.join(path.dirname(__file__), "assets/robot.png")
