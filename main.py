@@ -30,7 +30,7 @@ nb_actions = env.action_space.shape[0]
 # Training parameters
 batch_size = 8
 lr = 1e-3
-max_episode_steps = 200
+max_episode_steps = 50
 # Agent parameters
 num_steps_warmup_critic = 100
 num_steps_warmup_actor = 100

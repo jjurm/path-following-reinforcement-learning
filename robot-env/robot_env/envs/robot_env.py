@@ -32,7 +32,7 @@ class RobotEnv(gym.Env):
 
         # Boundaries of the environment
         self.FIELD_SIZE = 5.
-        self.MIN_SPEED = 0.
+        self.MIN_SPEED = -1.
         self.MAX_SPEED = 1.
         self.MAX_THETA = np.pi
 
@@ -72,7 +72,7 @@ class RobotEnv(gym.Env):
 
         # Update and compute velocities
         avg_u = (u + target_u) / 2
-        avg_w = (u + target_w) / 2
+        avg_w = (w + target_w) / 2
 
         theta_motion = theta + avg_w * self.dt / 2
 
@@ -104,6 +104,9 @@ class RobotEnv(gym.Env):
         potential = - self._get_goal_dist()
 
         return potential
+
+    def _get_reward(self, past_potential, new_potential):
+        return (new_potential - past_potential) - self.state[1] * 0.01
 
     def _get_observation(self):
         _, _, x, y, theta = self.state
@@ -155,7 +158,7 @@ class RobotEnv(gym.Env):
 
         observation = self._get_observation()
         next_potential = self._get_potential()
-        reward = next_potential - prev_potential
+        reward = self._get_reward(prev_potential, next_potential)
         done = self._is_done()
         info = {}
 
