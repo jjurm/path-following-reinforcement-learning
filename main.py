@@ -28,12 +28,18 @@ nb_actions = env.action_space.shape[0]
 #   Parameters
 ################
 # Training parameters
+<<<<<<< HEAD
 batch_size = 64
 lr = 1e-4
 max_episode_steps = 100
 limit = 100000
 nb_steps = 10000
 
+=======
+batch_size = 8
+lr = 1e-3
+max_episode_steps = 150
+>>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
 # Agent parameters
 num_steps_warmup_critic = 100
 num_steps_warmup_actor = 100
@@ -92,20 +98,30 @@ agent.compile(opt, metrics=['mae'])
 
 history = agent.fit(
     env,
+<<<<<<< HEAD
     nb_steps=nb_steps,
+=======
+    nb_steps=30000,
+>>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
     visualize=True,
     verbose=0,
     nb_max_episode_steps=max_episode_steps)
 
+<<<<<<< HEAD
 print(history)
 
 # After training is done, we save the final weights.
 agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 
+=======
+# # After training is done, we save the final weights.
+agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+#%%
+>>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
 
 # Finally, evaluate our algorithm for 5 episodes.
 agent.test(
     env,
-    nb_episodes=3,
+    nb_episodes=5,
     visualize=True,
     nb_max_episode_steps=max_episode_steps)

@@ -243,7 +243,11 @@ class RobotEnv(gym.Env):
                     rand_x * 3,
                     rand_y * 3,
                     rand_theta])
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
         if self.testItr == 100:
             self.dist_threshold = 0.3
         return self._get_observation()
