@@ -58,17 +58,21 @@ class RobotEnv(gym.Env):
         self.pathTraceSpaceCounter = 0
         self.path = np.zeros([self.pathTrace,2])
         self.pathPtr = 0
-        print('reached')
 
     def _get_time(self):
-        return self.ticks * self.dt
+        return round(self.ticks * self.dt, 4)
 
     def _is_invalid(self):
+        """
+        Check if out of bounds.
+        """
         _, _, x, y, _ = self.state
-        # Out of bounds
         return x < -self.FIELD_SIZE or x > self.FIELD_SIZE or y < -self.FIELD_SIZE or y > self.FIELD_SIZE
 
     def _is_goal_reached(self):
+        """
+        Check if goal is reached.
+        """
         return self._get_goal_dist() < self.dist_threshold
 
     def _is_done(self):
@@ -124,7 +128,7 @@ class RobotEnv(gym.Env):
             [np.cos(-theta), -np.sin(-theta)],
             [np.sin(-theta), np.cos(-theta)]
         ]).dot(self.goal_pos - np.array([x, y]))
-        #self.relative_goal_pos = goal_relative
+
         return goal_relative
 
     def step(self, action: np.ndarray):
@@ -162,13 +166,7 @@ class RobotEnv(gym.Env):
         info = {}
         self.ticks += 1
 
-        # print('current_position: {}'.format((x, y)))
-        # curr_pos = np.array([self.state[2], self.state[3]])
-        # print("Curr Dist: {:.4f}\t|\t Position: {}".format(
-        #     self._get_dist(curr_pos, self.goal_pos),
-        #     curr_pos))
-
-        frequency = 2
+        frequency = 50
         if done or self.ticks % np.round(1 / self.dt / frequency) == 0:
             if self._is_invalid():
                 reward -= 100
@@ -243,11 +241,7 @@ class RobotEnv(gym.Env):
                     rand_x * 3,
                     rand_y * 3,
                     rand_theta])
-<<<<<<< HEAD
 
-=======
-                
->>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
         if self.testItr == 100:
             self.dist_threshold = 0.3
         return self._get_observation()
