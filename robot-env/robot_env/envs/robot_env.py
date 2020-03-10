@@ -146,5 +146,5 @@ class RobotEnv(gym.Env):
 
     def close(self):
         if self.viewer:
-            self.viewer.close()
+            self.viewer.viewer.close()
             self.viewer = None

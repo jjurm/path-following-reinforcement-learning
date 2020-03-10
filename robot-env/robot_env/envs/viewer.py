@@ -3,7 +3,6 @@ from os import path
 from gym.envs.classic_control import rendering
 
 class Viewer:
-
     def __init__(self, env):
         self.env = env
         self.sim = env.sim
@@ -13,7 +12,6 @@ class Viewer:
         self.pathTraceSpaceCounter = 0
         self.path = np.zeros([self.pathTrace, 2])
         self.pathPtr = 0
-
 
         # Set the display window size and range
         self.viewer = rendering.Viewer(500, 500)
@@ -32,7 +30,7 @@ class Viewer:
         self.goal_t = rendering.Transform()
         self.goalobj.add_attr(self.goal_t)
         self.viewer.add_geom(self.goalobj)
-        self.goal_t.set_translation(**self.env.goal_pos)
+        self.goal_t.set_translation(*self.env.goal_pos)
 
         # Create trace path
         self.traceobj = []
@@ -62,5 +60,7 @@ class Viewer:
                 counter = (i + self.pathPtr) % self.pathTrace
                 self.traceobj_t[i].set_translation(self.path[counter][0], self.path[counter][1])
 
-        self.goal_t.set_translation(**self.env.goal_pos)
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+        self.goal_t.set_translation(*self.env.goal_pos)
+        output = self.viewer.render(return_rgb_array=mode == 'rgb_array')
+
+        return output
