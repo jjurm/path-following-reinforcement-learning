@@ -16,7 +16,7 @@ from models import actor, critic
 ############
 #   Setup
 ############
-ENV_NAME = 'robot_env:robot-env-v0'
+ENV_NAME = 'robot_env:robot-env-path-v0'
 
 # Get the environment and extract the number of actions.
 env = gym.make(ENV_NAME)

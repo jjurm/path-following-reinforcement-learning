@@ -7,8 +7,8 @@ class Viewer:
         self.env = env
         self.sim = env.sim
 
-        self.pathTrace = 50
-        self.pathTraceSpace = 3
+        self.pathTrace = 30
+        self.pathTraceSpace = 2
         self.pathTraceSpaceCounter = 0
         self.path = np.zeros([self.pathTrace, 2])
         self.pathPtr = 0

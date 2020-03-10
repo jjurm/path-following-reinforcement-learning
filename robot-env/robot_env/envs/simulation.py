@@ -62,3 +62,41 @@ class Simulation:
             rand_y,
             rand_theta
         ])
+
+    def reset_mode(self, itr, mode = 'gradual'):
+        rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+        rand_y = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+        rand_theta = np.random.uniform(-np.pi, np.pi)
+
+        if itr < 30:
+            self._state = np.array([
+                0,
+                0,
+                0,
+                0,
+                0
+            ])
+        elif itr < 100:
+            self._state = np.array([
+                0,
+                0,
+                rand_x,
+                rand_y,
+                0
+            ])
+        elif itr < 150:
+            self._state = np.array([
+                0,
+                0,
+                rand_x * 2,
+                rand_y * 2,
+                0
+            ])
+        else:
+            self._state = np.array([
+                0,
+                0,
+                rand_x * 2,
+                rand_y * 2,
+                rand_theta
+            ])

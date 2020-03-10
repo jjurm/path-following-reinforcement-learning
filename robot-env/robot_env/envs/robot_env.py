@@ -28,6 +28,7 @@ class RobotEnv(gym.Env):
         self.dt = 0.1  # Time delta per step
         self.sim = Simulation(self.dt)
         self.seed(0)
+        self.testItr = 0
 
         # Boundaries of the environment
         self.MIN_SPEED = 0.2
@@ -48,10 +49,6 @@ class RobotEnv(gym.Env):
             low=np.array([-self.sim.FIELD_SIZE, -self.sim.FIELD_SIZE], dtype=np.float32),
             high=np.array([self.sim.FIELD_SIZE, self.sim.FIELD_SIZE], dtype=np.float32),
             dtype=np.float32)
-
-        self.testItr = 0
-        self.relative_goal_pos = self.goal_pos
-        self.debug = [0, 0, 0, 0, 0, 0, 0, 0]
 
         # Visualisation variables
         self.viewer = None
@@ -93,6 +90,14 @@ class RobotEnv(gym.Env):
                 reward_directional = -np.pi * 2
 
         reward = reward_distance + reward_directional - np.abs(w) * 0.1
+        # Check correctness
+        if self.sim.is_invalid():
+            reward -= 100
+        if self._is_goal_reached():
+            reward += 50
+            reward += 25 / self.sim.time
+        else:
+            reward -= 10
 
         return reward
 
@@ -136,7 +141,10 @@ class RobotEnv(gym.Env):
             print(f"T {self.sim.time}: Pos ({x:.4f}, {y:.4f}), action ({u:.4f}, {w:.4f}), reward {reward}")
 
     def reset(self):
-        self.sim.reset()
+        self.sim.reset_mode(self.testItr)
+        self.testItr += 1
+        if self.testItr > 200 and self.testItr % 10 == 0:
+            self.goal_pos = np.array([np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9, np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9])
         return self._get_observation()
 
     def render(self, mode='human'):
