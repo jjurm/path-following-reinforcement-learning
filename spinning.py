@@ -34,14 +34,14 @@ if __name__ == '__main__':
     env = gym.make(ENV_NAME)
     feat = 32
 
-
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--num_runs', type=int, default=3)
+    parser.add_argument('--algo', required=True)
     args = parser.parse_args()
 
-    eg = ExperimentGrid(name='ppo-pyt-bench')
+    eg = ExperimentGrid(name=args.algo)
     eg.add('env_name', ENV_NAME, '', True)
     eg.add('seed', [10*i for i in range(args.num_runs)])
     eg.add('epochs', 20)
@@ -51,5 +51,14 @@ if __name__ == '__main__':
     eg.add('ac_kwargs:hidden_sizes', [(feat*2,feat*2)], 'hid')
     eg.add('ac_kwargs:activation', [torch.nn.ReLU], '')
 
-    # eg.run(ppo_pytorch, num_cpu=args.cpu)
-    eg.run(ddpg_pytorch, num_cpu=args.cpu)
+    if args.algo == 'ppo':
+        eg.run(ppo_pytorch, num_cpu=args.cpu)
+
+    elif args.algo == 'ddpg':
+        eg.run(ddpg_pytorch, num_cpu=args.cpu)
+
+    elif args.algo == 'sac':
+        eg.run(sac_pytorch, num_cpu=args.cpu)
+
+    else:
+        raise ValueError("invalid algo.")
