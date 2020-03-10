@@ -89,7 +89,7 @@ history = agent.fit(
     nb_max_episode_steps=max_episode_steps)
 
 # # After training is done, we save the final weights.
-# agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 #%%
 
 # Finally, evaluate our algorithm for 5 episodes.

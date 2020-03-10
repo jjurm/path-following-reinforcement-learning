@@ -26,7 +26,7 @@ class RobotEnv(gym.Env):
 
         # Boundaries of the environment
         self.FIELD_SIZE = 5.
-        self.MIN_SPEED = 0.5
+        self.MIN_SPEED = 0.2
         self.MAX_SPEED = 1.
         self.MAX_THETA = 2.
 
@@ -63,23 +63,6 @@ class RobotEnv(gym.Env):
     def _get_time(self):
         return self.ticks * self.dt
 
-    def _get_new_state(self, next_u, next_w):
-        next_u = (np.tanh(next_u) + 1) / 2 * (self.MAX_SPEED - self.MIN_SPEED) + self.MIN_SPEED # normalize the range of action is -1.5 to 1.5
-        next_w = np.tanh(next_w) * self.MAX_THETA # normalize
-
-        u, w, x, y, theta = self.state
-
-        # Update state
-        new_theta = theta + w * self.dt
-        while new_theta > np.pi:
-            new_theta -= np.pi * 2
-        while new_theta < -np.pi:
-            new_theta += np.pi * 2
-        new_x = x + u * np.cos(theta) * self.dt
-        new_y = y + u * np.sin(theta) * self.dt
-
-        return np.array([next_u, next_w, new_x, new_y, new_theta])
-
     def _is_invalid(self):
         _, _, x, y, _ = self.state
         # Out of bounds
@@ -96,26 +79,6 @@ class RobotEnv(gym.Env):
 
     def _get_goal_dist(self):
         return self._get_dist(self.state[[2, 3]], self.goal_pos)
-
-    def _get_potential(self):
-        potential = - self._get_goal_dist()
-
-        return potential
-
-    def _get_direction(self, destination):
-        if destination[0]==0:
-            if destination[1]>0:
-                direction = np.pi/2
-            else:
-                direction = -np.pi/2
-        else:
-            direction = np.arctan(destination[1]/destination[0])
-            if destination[0]<0:
-                if destination[1]<0:
-                    direction -= np.pi
-                else:
-                    direction += np.pi
-        return direction
 
     def _get_reward(self):
         u, w, x, y, theta = self.state
@@ -137,6 +100,23 @@ class RobotEnv(gym.Env):
 
         return reward_distance + reward_directional - np.abs(w) * 0.1
 
+    def _get_new_state(self, next_u, next_w):
+        next_u = (np.tanh(next_u) + 1) / 2 * (self.MAX_SPEED - self.MIN_SPEED) + self.MIN_SPEED # normalize the range of action is -1.5 to 1.5
+        next_w = np.tanh(next_w) * self.MAX_THETA # normalize
+
+        u, w, x, y, theta = self.state
+
+        # Update state
+        new_theta = theta + w * self.dt
+        while new_theta > np.pi:
+            new_theta -= np.pi * 2
+        while new_theta < -np.pi:
+            new_theta += np.pi * 2
+        new_x = x + u * np.cos(theta) * self.dt
+        new_y = y + u * np.sin(theta) * self.dt
+
+        return np.array([next_u, next_w, new_x, new_y, new_theta])
+
     def _get_observation(self):
         _, _, x, y, theta = self.state
 
@@ -150,14 +130,6 @@ class RobotEnv(gym.Env):
     def step(self, action: np.ndarray):
         """
         States are updated according to forward kinematics.
-
-        x_dot = u · cos θ
-        y_dot = u · sin θ
-        θ_dot = ω
-
-        x -> x_dot . dt
-        y -> y_dot . dt
-        theta -> theta_dot . dt
 
         Args:
             - action (tuple): u and change in v.
@@ -199,11 +171,14 @@ class RobotEnv(gym.Env):
         frequency = 2
         if done or self.ticks % np.round(1 / self.dt / frequency) == 0:
             if self._is_invalid():
-                reward -= 10000
+                reward -= 100
             if self._is_goal_reached():
-                reward += 10000
+                reward += 50
+                reward += 25 / self._get_time()
+            else:
+                reward -= 10
             u, w, x, y, theta = self.state
-            print(f"T {self._get_time()}: Pos ({x}, {y}), action ({action} -> {u}, {w}), Obs{observation}, State {self.state}, reward {reward}")
+            print(f"T {self._get_time()}: Pos ({x:.4f}, {y:.4f}), action ({u:.4f}, {w:.4f}), reward {reward}")
 
         return observation, reward, done, info
 
@@ -231,6 +206,15 @@ class RobotEnv(gym.Env):
                 rand_x,
                 rand_y,
                 0])
+            while self._get_dist(self.state[[2,3]], self.goal_pos) < 0.5:
+                rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                rand_y = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                self.state = np.array([
+                    0,
+                    0,
+                    rand_x,
+                    rand_y,
+                    0])
         if self.testItr > 50:
             self.state = np.array([
                 0,
@@ -238,8 +222,30 @@ class RobotEnv(gym.Env):
                 rand_x * 3,
                 rand_y * 3,
                 rand_theta])
+            while self._get_dist(self.state[[2,3]], self.goal_pos) < 0.5:
+                rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                rand_y = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                self.state = np.array([
+                    0,
+                    0,
+                    rand_x * 3,
+                    rand_y * 3,
+                    rand_theta])
         self.ticks = 0
-        print('debug:',self.debug)
+        if self.testItr > 80 and self.testItr % 10 == 0:
+            self.goal_pos = np.array([np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE)*0.9, np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE)*0.9])
+            while self._get_dist(self.state[[2,3]], self.goal_pos) < 0.5:
+                rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                rand_y = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.
+                self.state = np.array([
+                    0,
+                    0,
+                    rand_x * 3,
+                    rand_y * 3,
+                    rand_theta])
+                
+        if self.testItr == 100:
+            self.dist_threshold = 0.3
         return self._get_observation()
 
     def render(self, mode='human'):
@@ -291,6 +297,7 @@ class RobotEnv(gym.Env):
                 counter = (i + self.pathPtr) % self.pathTrace
                 self.traceobj_t[i].set_translation(self.path[counter][0],self.path[counter][1])
 
+        self.goal_t.set_translation(self.goal_pos[0],self.goal_pos[1])
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
