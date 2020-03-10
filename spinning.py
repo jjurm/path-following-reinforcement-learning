@@ -22,11 +22,7 @@
 #========
 
 from spinup.utils.run_utils import ExperimentGrid
-<<<<<<< HEAD
 from spinup import ppo_pytorch, ddpg_pytorch, sac_pytorch
-=======
-from spinup import ppo_pytorch
->>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
 import torch
 import gym
 
@@ -55,9 +51,5 @@ if __name__ == '__main__':
     eg.add('ac_kwargs:hidden_sizes', [(feat*2,feat*2)], 'hid')
     eg.add('ac_kwargs:activation', [torch.nn.ReLU], '')
 
-<<<<<<< HEAD
     # eg.run(ppo_pytorch, num_cpu=args.cpu)
     eg.run(ddpg_pytorch, num_cpu=args.cpu)
-=======
-    eg.run(ppo_pytorch, num_cpu=args.cpu)
->>>>>>> 484bf4449eb0aada0173d026314e91633a6dcc8a
