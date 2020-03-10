@@ -142,7 +142,8 @@ class RobotEnv(gym.Env):
     def render(self, mode='human'):
         if self.viewer is None:
             self.viewer = Viewer(self)
-        self.viewer.render(mode)
+            
+        return self.viewer.render(mode)
 
     def close(self):
         if self.viewer:
