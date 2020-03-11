@@ -149,6 +149,24 @@ class RobotEnv(gym.Env):
             
         return self.viewer.render(mode)
 
+    def _abs_to_rel(self, vec):
+        theta = self.sim.theta
+        return np.array([
+            [np.cos(-theta), -np.sin(-theta)],
+            [np.sin(-theta), np.cos(-theta)]
+        ]).dot(vec)
+
+    def get_cp_vector(self):
+        rg = self.goal_pos - self.sim.position
+        sg = self.goal_pos - self.sim.start_state[[2,3]]
+        sg_norm = sg / np.linalg.norm(sg)
+        pg = rg.dot(sg_norm) * sg_norm
+        rp = rg - pg
+        return self._abs_to_rel(rp)
+
+    def get_rough_direction(self):
+        return self._abs_to_rel(self.goal_pos - self.get_virtual_position())
+
     def close(self):
         if self.viewer:
             self.viewer.viewer.close()
