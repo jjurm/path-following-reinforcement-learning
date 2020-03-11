@@ -138,6 +138,32 @@ class RobotEnvPath(gym.Env):
 
         return (self._get_observation()), (self._get_reward()), self._is_done(), {}
 
+    def get_closest_directions():
+        min_dist = -1
+        prev = [0,0]
+        min_direction_curr = [0,0]
+        min_direction_next = [0,0]
+        for i in range(np.ceil(self.path_pointer+0.05)):
+            if i==0:
+                min_dist = self._get_dist(self.sim.position, self.path[i])
+                min_direction_curr = self.path[i]
+                min_direction_next = self.path[i]
+                prev = min_direction_curr
+            if i>=len(self.path)-1:
+                if self._get_dist(self.sim.position, self.path[i])<min_dist:
+                    min_direction_curr = self.path[i]
+                    min_direction_next = self.path[i]
+            else:
+                for j in range(20):
+                    tmp_position = self.path[i] * (1 - j/20) + (j/20) * self.path[i+1]
+                    if prev == min_direction_curr:
+                        min_direction_next = tmp_position
+                    if self._get_dist(self.sim.position, tmp_position)<min_dist:
+                        min_dist = self._get_dist(self.sim.position, tmp_position)
+                        min_direction_curr = tmp_position
+                    prev = tmp_position
+        return min_direction_curr - self.sim.position , np.linalg.norm(min_direction_next - min_direction_curr)
+        
     def _print_info(self, reward):
         frequency = 50
         if self._is_done() or self.sim.ticks % np.round(1 / self.dt / frequency) == 0:
