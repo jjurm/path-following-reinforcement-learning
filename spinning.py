@@ -39,12 +39,17 @@ if __name__ == '__main__':
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--num_runs', type=int, default=3)
     parser.add_argument('--algo', required=True)
+    parser.add_argument('--name', default=None)
+    parser.add_argument('--epochs', type=int, default=50)
     args = parser.parse_args()
 
-    eg = ExperimentGrid(name=args.algo)
+    if args.name is None:
+        args.name = args.algo
+
+    eg = ExperimentGrid(name=args.name)
     eg.add('env_name', ENV_NAME, '', True)
     eg.add('seed', [10*i for i in range(args.num_runs)])
-    eg.add('epochs', 20)
+    eg.add('epochs', args.epochs)
     eg.add('steps_per_epoch', 4000)
     # eg.add('ac_kwargs:hidden_sizes', [(feat,), (feat*2,feat*2)], 'hid')
     # eg.add('ac_kwargs:activation', [torch.nn.Tanh, torch.nn.ReLU], '')
