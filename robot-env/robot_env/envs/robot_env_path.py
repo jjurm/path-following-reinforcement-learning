@@ -29,7 +29,7 @@ class RobotEnvPath(gym.Env):
         self.sim = Simulation(self.dt)
         self.seed(0)
         self.testItr = 0
-        self.path_pointer = -1
+        self.path_pointer = -1.
 
         # Boundaries of the environment
         self.MIN_SPEED = 0.2
@@ -93,13 +93,8 @@ class RobotEnvPath(gym.Env):
 
         reward = reward_distance + reward_directional - np.abs(w) * 0.1
         # Check correctness
-        if self.sim.is_invalid():
-            reward -= 100
         if self._is_goal_reached():
-            reward += 50
             reward += 25 / self.sim.time
-        else:
-            reward -= 10
 
         return reward
 
@@ -133,9 +128,13 @@ class RobotEnvPath(gym.Env):
         self.sim.step(np.array([u, w]))
         
         if self.path_pointer>=0:
-            if self._get_goal_dist() < 1. and self.path_pointer < len(self.path)-1:
-                self.path_pointer += 1
-                self.goal_pos = self.path[self.path_pointer]
+            while self._get_dist(self.sim.position, self.goal_pos) < 1. and not self.path_pointer>=len(self.path)-1:
+                self.path_pointer += .05
+                if self.path_pointer>len(self.path)-1:
+                    self.path_pointer = len(self.path)-1
+                progress = self.path_pointer - int(self.path_pointer)
+                new_goal_pos = self.path[int(self.path_pointer)] * (1 - progress) + progress * self.path[int(np.ceil(self.path_pointer))]
+                self.goal_pos = new_goal_pos
 
         return (self._get_observation()), (self._get_reward()), self._is_done(), {}
 
@@ -150,9 +149,11 @@ class RobotEnvPath(gym.Env):
     def reset(self):
         self.sim.reset_mode(self.testItr)
         self.testItr += 1
-        if self.testItr > 200:
-            self.path_pointer = 0
-            self.goal_pos = self.path[self.path_pointer]
+        if self.testItr > 200 and self.testItr <= 300 and self.testItr % 10 == 0:
+            self.goal_pos = np.array([np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9, np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9])
+        if self.testItr > 300:
+            self.path_pointer = 0.
+            self.goal_pos = self.path[int(self.path_pointer)]
         return self._get_observation()
 
     def render(self, mode='human'):
