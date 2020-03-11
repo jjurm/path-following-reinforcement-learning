@@ -37,6 +37,7 @@ class RobotEnv(gym.Env):
         self.MAX_THETA = 2.
 
         # Environment parameters
+        self.path = np.array([])
         self.goal_pos = np.array([3, 0])  # goal position
         self.dist_threshold = 0.5  # how close to goal = reach goal
 
