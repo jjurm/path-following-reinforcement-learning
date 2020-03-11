@@ -173,13 +173,15 @@ class RobotEnvPath(gym.Env):
             print(f"T {self.sim.time}: Pos ({x:.4f}, {y:.4f}), action ({u:.4f}, {w:.4f}), reward {reward}")
 
     def reset(self):
-        self.sim.reset_mode(self.testItr)
-        self.testItr += 1
-        if self.testItr > 200 and self.testItr <= 300 and self.testItr % 10 == 0:
-            self.goal_pos = np.array([np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9, np.random.uniform(-self.sim.FIELD_SIZE, self.sim.FIELD_SIZE) * .9])
-        if self.testItr > 300:
-            self.path_pointer = 0.
-            self.goal_pos = self.path[int(self.path_pointer)]
+        self.sim.reset()
+		self.path = [np.random.uniform(low=-self.FIELD_SIZE *.8, high=self.FIELD_SIZE*.8, size=2)]
+		while len(self.path) < 7:
+			curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
+			while abs(curr[0] - self.path[-1][0]) < 1. or abs(curr[1] - self.path[-1][1]) < 0.5:
+				curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
+			self.path.append(curr)
+		self.path_pointer = 0.
+		self.goal_pos = self.path[int(self.path_pointer)]
         return self._get_observation()
 
     def render(self, mode='human'):
