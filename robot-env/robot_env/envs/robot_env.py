@@ -27,6 +27,7 @@ class RobotEnv(gym.Env):
         """
         self.dt = 0.1  # Time delta per step
         self.sim = Simulation(self.dt)
+        self.get_virtual_position = lambda: self.sim.position
         self.seed(0)
 
         # Boundaries of the environment
@@ -69,7 +70,7 @@ class RobotEnv(gym.Env):
         return np.linalg.norm(p1 - p2)
 
     def _get_goal_dist(self):
-        return self._get_dist(self.sim.position, self.goal_pos)
+        return self._get_dist(self.get_virtual_position(), self.goal_pos)
 
     def _get_reward(self):
         u, w = self.sim.speed
@@ -97,7 +98,7 @@ class RobotEnv(gym.Env):
         return reward
 
     def _get_observation(self):
-        x, y = self.sim.position
+        x, y = self.get_virtual_position()
         theta = self.sim.theta
 
         goal_relative = np.array([
@@ -144,6 +145,24 @@ class RobotEnv(gym.Env):
             self.viewer = Viewer(self)
             
         return self.viewer.render(mode)
+
+    def _abs_to_rel(self, vec):
+        theta = self.sim.theta
+        return np.array([
+            [np.cos(-theta), -np.sin(-theta)],
+            [np.sin(-theta), np.cos(-theta)]
+        ]).dot(vec)
+
+    def get_cp_vector(self):
+        rg = self.goal_pos - self.sim.position
+        sg = self.goal_pos - self.sim.start_state[[2,3]]
+        sg_norm = sg / np.linalg.norm(sg)
+        pg = rg.dot(sg_norm) * sg_norm
+        rp = rg - pg
+        return self._abs_to_rel(rp)
+
+    def get_rough_direction(self):
+        return self._abs_to_rel(self.goal_pos - self.get_virtual_position())
 
     def close(self):
         if self.viewer:

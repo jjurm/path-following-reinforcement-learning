@@ -62,3 +62,4 @@ class Simulation:
             rand_y,
             rand_theta
         ])
+        self.start_state = self._state.copy()
