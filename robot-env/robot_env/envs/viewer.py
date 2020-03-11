@@ -44,13 +44,20 @@ class Viewer:
         self.traceobj_t = []
         for i in range(self.pathTrace):
             self.traceobj.append(rendering.make_circle(.02 + .03 * i / self.pathTrace))
-            print(.5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace, i / self.pathTrace)
+            # print(.5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace, i / self.pathTrace)
             self.traceobj[i].set_color(.5 - .5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace,
                                        i / self.pathTrace)  # Setting the color gradiant for path
             self.traceobj_t.append(rendering.Transform())
             self.traceobj[i].add_attr(self.traceobj_t[i])
             self.traceobj_t[i].set_translation(-2 + i * 0.05, 0)
             self.viewer.add_geom(self.traceobj[i])
+            
+        self.goalPathobj = []
+        self.goalPathobj_t = []
+        for i in range (1,len(self.env.path)):
+            self.goalPathobj.append(rendering.Line(self.env.path[i-1],self.env.path[i]))
+            self.goalPathobj[i-1].set_color(1.,0,0)
+            self.viewer.add_geom(self.goalPathobj[i-1])
 
     def render(self, mode='human'):
         # Draw the robot
@@ -70,6 +77,13 @@ class Viewer:
                 counter = (i + self.pathPtr) % self.pathTrace
                 self.traceobj_t[i].set_translation(self.path[counter][0], self.path[counter][1])
 
+        self.viewer.geoms = self.viewer.geoms[:self.pathTrace]
+        self.goalPathobj = []
+        self.goalPathobj_t = []
+        for i in range (1,len(self.env.path)):
+            self.goalPathobj.append(rendering.Line(self.env.path[i-1],self.env.path[i]))
+            self.goalPathobj[i-1].set_color(1.,0,0)
+            self.viewer.add_geom(self.goalPathobj[i-1])
         #self.goal_t.set_translation(*self.env.goal_pos)
         output = self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
