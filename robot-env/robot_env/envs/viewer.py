@@ -23,33 +23,50 @@ class Viewer:
         self.robotobj = rendering.Image(fname, .25, .25)
         self.robot_t = rendering.Transform()
         self.robotobj.add_attr(self.robot_t)
+        
+        # Create the target goal
+        fname = path.join(path.dirname(__file__), "assets/target.png")
+        self.targetobj = rendering.Image(fname, .3, .3)
+        self.targetobj.set_color(255, 0, 0)
+        self.target_t = rendering.Transform()
+        self.targetobj.add_attr(self.target_t)
 
         # Create the goal location
-        self.goalobj = rendering.make_circle(.1)
-        self.goalobj.set_color(255, 0, 0)
-        self.goal_t = rendering.Transform()
-        self.goalobj.add_attr(self.goal_t)
-        self.viewer.add_geom(self.goalobj)
-        self.goal_t.set_translation(*self.env.goal_pos)
+        #self.goalobj = rendering.make_circle(.1)
+        #self.goalobj.set_color(255, 0, 0)
+        #self.goal_t = rendering.Transform()
+        #self.goalobj.add_attr(self.goal_t)
+        #self.viewer.add_geom(self.goalobj)
+        #self.goal_t.set_translation(*self.env.goal_pos)
 
         # Create trace path
         self.traceobj = []
         self.traceobj_t = []
         for i in range(self.pathTrace):
             self.traceobj.append(rendering.make_circle(.02 + .03 * i / self.pathTrace))
-            print(.5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace, i / self.pathTrace)
+            # print(.5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace, i / self.pathTrace)
             self.traceobj[i].set_color(.5 - .5 * i / self.pathTrace, 1. - .5 * i / self.pathTrace,
                                        i / self.pathTrace)  # Setting the color gradiant for path
             self.traceobj_t.append(rendering.Transform())
             self.traceobj[i].add_attr(self.traceobj_t[i])
             self.traceobj_t[i].set_translation(-2 + i * 0.05, 0)
             self.viewer.add_geom(self.traceobj[i])
+            
+        self.goalPathobj = []
+        self.goalPathobj_t = []
+        for i in range (1,len(self.env.path)):
+            self.goalPathobj.append(rendering.Line(self.env.path[i-1],self.env.path[i]))
+            self.goalPathobj[i-1].set_color(1.,0,0)
+            self.viewer.add_geom(self.goalPathobj[i-1])
 
     def render(self, mode='human'):
         # Draw the robot
         self.viewer.add_onetime(self.robotobj)
         self.robot_t.set_translation(self.sim.position[0], self.sim.position[1])
         self.robot_t.set_rotation(self.sim.theta - np.pi / 2)
+        
+        self.viewer.add_onetime(self.targetobj)
+        self.target_t.set_translation(*self.env.goal_pos)
 
         # Update trace
         self.pathTraceSpaceCounter = (self.pathTraceSpaceCounter + 1) % self.pathTraceSpace
@@ -60,7 +77,14 @@ class Viewer:
                 counter = (i + self.pathPtr) % self.pathTrace
                 self.traceobj_t[i].set_translation(self.path[counter][0], self.path[counter][1])
 
-        self.goal_t.set_translation(*self.env.goal_pos)
+        self.viewer.geoms = self.viewer.geoms[:self.pathTrace]
+        self.goalPathobj = []
+        self.goalPathobj_t = []
+        for i in range (1,len(self.env.path)):
+            self.goalPathobj.append(rendering.Line(self.env.path[i-1],self.env.path[i]))
+            self.goalPathobj[i-1].set_color(1.,0,0)
+            self.viewer.add_geom(self.goalPathobj[i-1])
+        #self.goal_t.set_translation(*self.env.goal_pos)
         output = self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
         return output

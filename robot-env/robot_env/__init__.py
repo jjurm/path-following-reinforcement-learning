@@ -8,3 +8,7 @@ register(
     id='robot-env-path-v0',
     entry_point='robot_env.envs:RobotEnvPath',
 )
+register(
+    id='robot-env-controller-v0',
+    entry_point='robot_env.envs:RobotEnvController',
+)

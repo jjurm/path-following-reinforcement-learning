@@ -62,6 +62,8 @@ class Simulation:
             rand_y,
             rand_theta
         ])
+        self.start_state = self._state.copy()
+
 
     def reset_mode(self, itr, mode = 'gradual'):
         rand_x = np.random.uniform(-self.FIELD_SIZE, self.FIELD_SIZE) / 5.

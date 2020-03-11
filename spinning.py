@@ -31,6 +31,7 @@ if __name__ == '__main__':
     #   Setup
     ############
     ENV_NAME = 'robot_env:robot-env-v0'
+    #ENV_NAME = 'robot_env:robot-env-controller-v0'
     env = gym.make(ENV_NAME)
     feat = 32
 
