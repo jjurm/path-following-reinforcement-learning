@@ -174,14 +174,14 @@ class RobotEnvPath(gym.Env):
 
     def reset(self):
         self.sim.reset()
-		self.path = [np.random.uniform(low=-self.FIELD_SIZE *.8, high=self.FIELD_SIZE*.8, size=2)]
-		while len(self.path) < 7:
-			curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
-			while abs(curr[0] - self.path[-1][0]) < 1. or abs(curr[1] - self.path[-1][1]) < 0.5:
-				curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
-			self.path.append(curr)
-		self.path_pointer = 0.
-		self.goal_pos = self.path[int(self.path_pointer)]
+        self.path = [np.random.uniform(low=-self.FIELD_SIZE *.8, high=self.FIELD_SIZE*.8, size=2)]
+        while len(self.path) < 7:
+            curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
+            while abs(curr[0] - self.path[-1][0]) < 1. or abs(curr[1] - self.path[-1][1]) < 0.5:
+                curr = np.random.uniform(low=-self.FIELD_SIZE*.9, high=self.FIELD_SIZE*.9, size=2)
+            self.path.append(curr)
+        self.path_pointer = 0.
+        self.goal_pos = self.path[int(self.path_pointer)]
         return self._get_observation()
 
     def render(self, mode='human'):
