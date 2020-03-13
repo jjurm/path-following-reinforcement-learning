@@ -4,9 +4,10 @@ from gym import spaces
 from simple_pid import PID
 
 from .robot_env import RobotEnv
+from .robot_env_path import RobotEnvPath
 
 
-class RobotEnvController(RobotEnv):
+class RobotEnvController(RobotEnvPath):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
@@ -45,7 +46,6 @@ class RobotEnvController(RobotEnv):
         direction_perpendicular = vector_perpendicular_oriented / np.abs(error_signed) if np.abs(error_signed) > 1e-7 else direction_forward
 
         desired_vector = -self.pid(error_signed) * direction_perpendicular + direction_forward
-        #desired_vector = -direction_perpendicular
 
         direction_desired = desired_vector / np.linalg.norm(desired_vector)
 

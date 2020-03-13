@@ -138,7 +138,7 @@ class RobotEnvPath(gym.Env):
 
         return (self._get_observation()), (self._get_reward()), self._is_done(), {}
 
-    def get_closest_directions():
+    def get_closest_directions(self):
         min_dist = -1
         prev = [0,0]
         min_direction_curr = [0,0]
@@ -162,8 +162,8 @@ class RobotEnvPath(gym.Env):
                         min_dist = self._get_dist(self.sim.position, tmp_position)
                         min_direction_curr = tmp_position
                     prev = tmp_position
-        return min_direction_curr - self.sim.position , np.linalg.norm(min_direction_next - min_direction_curr)
-        
+        return min_direction_curr - self.sim.position , min_direction_next - min_direction_curr
+
     def _print_info(self, reward):
         frequency = 50
         if self._is_done() or self.sim.ticks % np.round(1 / self.dt / frequency) == 0:
