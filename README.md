@@ -1,12 +1,12 @@
-# Reinforcement learning for path following
+# Reinforcement Learning for Path Following
 
-Consider the task of a problem attempting to follow a path in a constrained environment with only a few lines to follow. We attempt this using end-to-end reinforcement learning and explore two algorithms for doing so: Deep Deterministic Policy Gradients (DDPG) and Proximal Policy Optimisation (PPO). We further explore different problem formulations to learn a path-following controller or the velocities of the agent directly, and report our findings.
+_Consider the task of a problem attempting to follow a path in a constrained environment with only a few lines to follow. We attempt this using end-to-end reinforcement learning and explore two algorithms for doing so: Deep Deterministic Policy Gradients (DDPG) and Proximal Policy Optimisation (PPO). We further explore different problem formulations to learn a path-following controller or the velocities of the agent directly, and report our findings._
 
 ## Report
 
-The PDF containing the project's Report can be found <a href="https://github.com/jjurm/path-following-reinforcement-learning/blob/master/MRS_Project_7.pdf">here</a>.
+The PDF containing the project's Report can be found <a href="https://github.com/jjurm/path-following-reinforcement-learning/blob/master/Report.pdf">here</a>.
 
-<a href="https://github.com/jjurm/path-following-reinforcement-learning/blob/master/MRS_Project_7.pdf"><img src="https://raw.githubusercontent.com/jjurm/bonedoctor/master/assets/report-frontpage.png" width="232" height="300" /></a>
+<a href="https://github.com/jjurm/path-following-reinforcement-learning/blob/master/Report.pdf"><img src="https://github.com/jjurm/path-following-reinforcement-learning/raw/master/assets/report-frontpage.png" width="232" height="300" /></a>
 
 ## Presentation slides
 
